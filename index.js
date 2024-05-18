@@ -69,6 +69,10 @@ const bypass = async (hwid) => {
   }
 };
 
+app.get('/', (req, res) => {
+  res.end();
+});
+
 app.get('/api/bypass', async (req, res) => {
   const hwid = req.query.hwid;
 
