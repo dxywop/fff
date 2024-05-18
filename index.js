@@ -69,14 +69,14 @@ const bypass = async (hwid) => {
   }
 };
 
-app.get('/api/bypass/:hwid', async (req, res) => {
-  const hwid = req.params.hwid;
+app.get('/api/bypass', async (req, res) => {
+  const hwid = req.query.hwid;
   bypass(hwid)
     .then(result => {
-      res.send(result);
+      res.json({ result });
     })
     .catch(error => {
-      res.send(`Error: ${error}`);
+      res.json({ error: `Error: ${error}` });
     });
 });
 
