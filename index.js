@@ -1,5 +1,4 @@
 const express = require('express');
-const fetch = require('node-fetch');
 const crypto = require('crypto');
 const cheerio = require('cheerio');
 const NodeCache = require('node-cache');
@@ -21,7 +20,8 @@ const cache = new NodeCache({ stdTTL: 600 });
 
 const md5 = (data) => crypto.createHash('md5').update(data).digest('hex');
 
-const bypass = async (hwid) => {
+  const bypass = async (hwid) => {
+  const fetch = (await import('node-fetch')).default;
   const hashedHwid = md5(hwid);
 
   const startUrl = `https://flux.li/android/external/start.php?HWID=${hwid}`;
