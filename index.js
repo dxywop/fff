@@ -52,13 +52,18 @@ const bypass = async (hwid) => {
     const endExtractionTime = process.hrtime.bigint();
     const extractionDuration = (Number(endExtractionTime - startExtractionTime) / 1e9).toFixed(2); // convert to seconds and format
 
-    if (extractedKey === hashedHwid) {
-      const result = `Success:\nKey: ${hashedHwid}\nFetch Duration: ${fetchDuration} s\nExtraction Duration: ${extractionDuration} s`;
-      cache.set(hwid, result);
-      return result;
-    } else {
-      return 'Error: Nuh Uhh';
-    }
+if (extractedKey === hashedHwid) {
+  const result = {
+    status: "Success",
+    key: hashedHwid,
+    fetchDuration: fetchDuration + " s",
+    extractionDuration: extractionDuration + " s"
+  };
+  cache.set(hwid, result);
+  return result;
+} else {
+  return { status: "Error", message: "Nuh Uhh" };
+}
   } catch (error) {
     const cachedError = cache.get(error.config.url);
     if (cachedError) {
