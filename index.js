@@ -69,15 +69,15 @@ const bypass = async (hwid) => {
   }
 };
 
-app.get('/', (req, res) => {
-  res.status(500).end();
-});
-
 app.get('/api/bypass', async (req, res) => {
   const hwid = req.query.hwid;
 
   if (!hwid) {
     return res.status(400).json({ error: 'hwid is required' });
+  }
+
+  if (hwid.length < 32) {
+    return res.status(400).json({ error: 'Invalid hwid.' });
   }
 
   bypass(hwid)
