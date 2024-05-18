@@ -20,7 +20,7 @@ const cache = new NodeCache({ stdTTL: 600 });
 
 const md5 = (data) => crypto.createHash('md5').update(data).digest('hex');
 
-  const bypass = async (hwid) => {
+const bypass = async (hwid) => {
   const fetch = (await import('node-fetch')).default;
   const hashedHwid = md5(hwid);
 
@@ -34,16 +34,26 @@ const md5 = (data) => crypto.createHash('md5').update(data).digest('hex');
       return cachedResult;
     }
 
+    const startFetchTime = process.hrtime.bigint();
+
     await fetch(startUrl, { method: 'POST', headers });
     await fetch(check1Url, { headers });
     const response = await fetch(mainUrl, { headers });
+
+    const endFetchTime = process.hrtime.bigint();
+    const fetchDuration = Number(endFetchTime - startFetchTime) / 1e6; // convert to milliseconds
+
+    const startExtractionTime = process.hrtime.bigint();
 
     const text = await response.text();
     const $ = cheerio.load(text);
     const extractedKey = $('body > main > code').text().trim();
 
+    const endExtractionTime = process.hrtime.bigint();
+    const extractionDuration = Number(endExtractionTime - startExtractionTime) / 1e6; // convert to milliseconds
+
     if (extractedKey === hashedHwid) {
-      const result = `Success:\nKey: ${hashedHwid}`;
+      const result = `Success:\nKey: ${hashedHwid}\nFetch Duration: ${fetchDuration} ms\nExtraction Duration: ${extractionDuration} ms`;
       cache.set(hwid, result);
       return result;
     } else {
