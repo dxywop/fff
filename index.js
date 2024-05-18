@@ -43,27 +43,21 @@ const bypass = async (hwid) => {
     const endFetchTime = process.hrtime.bigint();
     const fetchDuration = (Number(endFetchTime - startFetchTime) / 1e9).toFixed(2); // convert to seconds and format
 
-    const startExtractionTime = process.hrtime.bigint();
-
     const text = await response.text();
     const $ = cheerio.load(text);
     const extractedKey = $('body > main > code').text().trim();
 
-    const endExtractionTime = process.hrtime.bigint();
-    const extractionDuration = (Number(endExtractionTime - startExtractionTime) / 1e9).toFixed(2); // convert to seconds and format
-
-if (extractedKey === hashedHwid) {
-  const result = {
-    status: "Success",
-    key: hashedHwid,
-    fetchDuration: fetchDuration + " s",
-    extractionDuration: extractionDuration + " s"
-  };
-  cache.set(hwid, result);
-  return result;
-} else {
-  return { status: "Error", message: "Nuh Uhh" };
-}
+    if (extractedKey === hashedHwid) {
+      const result = {
+        status: "Success",
+        key: hashedHwid,
+        fetchDuration: fetchDuration + " s"
+      };
+      cache.set(hwid, result);
+      return result;
+    } else {
+      return { status: "Error", message: "Nuh Uhh" };
+    }
   } catch (error) {
     const cachedError = cache.get(error.config.url);
     if (cachedError) {
