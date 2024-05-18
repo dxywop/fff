@@ -71,12 +71,17 @@ const bypass = async (hwid) => {
 
 app.get('/api/bypass', async (req, res) => {
   const hwid = req.query.hwid;
+
+  if (!hwid) {
+    return res.status(400).json({ error: 'Error: hwid is required' });
+  }
+
   bypass(hwid)
     .then(result => {
       res.json({ result });
     })
     .catch(error => {
-      res.json({ error: `Error: ${error}` });
+      res.status(500).json({ error: `Error: ${error}` });
     });
 });
 
