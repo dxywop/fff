@@ -1,23 +1,21 @@
 const express = require('express');
-const axios = require('axios');
+const fetch = require('node-fetch');
 const crypto = require('crypto');
 const cheerio = require('cheerio');
 const NodeCache = require('node-cache');
 
 const app = express();
 
-const api = axios.create({
-  headers: {
-    Referer: 'https://linkvertise.com/',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Accept-Language': 'en-US,en;q=0.9',
-    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Encoding': 'gzip, deflate, br',
-    Connection: 'keep-alive',
-    'Cache-Control': 'no-cache',
-    Pragma: 'no-cache',
-  },
-});
+const headers = {
+  Referer: 'https://linkvertise.com/',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+  'Accept-Language': 'en-US,en;q=0.9',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+  'Accept-Encoding': 'gzip, deflate, br',
+  Connection: 'keep-alive',
+  'Cache-Control': 'no-cache',
+  Pragma: 'no-cache',
+};
 
 const cache = new NodeCache({ stdTTL: 600 });
 
@@ -36,11 +34,12 @@ const bypass = async (hwid) => {
       return cachedResult;
     }
 
-    await api.post(startUrl);
-    await api.get(check1Url);
-    const [response] = await Promise.all([api.get(mainUrl)]);
+    await fetch(startUrl, { method: 'POST', headers });
+    await fetch(check1Url, { headers });
+    const response = await fetch(mainUrl, { headers });
 
-    const $ = cheerio.load(response.data);
+    const text = await response.text();
+    const $ = cheerio.load(text);
     const extractedKey = $('body > main > code').text().trim();
 
     if (extractedKey === hashedHwid) {

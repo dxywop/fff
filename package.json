@@ -11,10 +11,12 @@
   "license": "ISC",
   "dependencies": {
     "@vercel/node": "^3.1.5",
+    "@vercel/speed-insights": "^1.0.10",
     "axios": "^1.6.8",
     "cheerio": "^1.0.0-rc.12",
     "express": "^4.19.2",
-    "node-cache": "^5.1.2"
+    "node-cache": "^5.1.2",
+    "node-fetch": "^3.3.2"
   },
   "engines": {
     "node": "20.x"
