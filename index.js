@@ -70,7 +70,7 @@ const bypass = async (hwid) => {
 };
 
 app.get('/', (req, res) => {
-  res.end();
+  res.status(500).end();
 });
 
 app.get('/api/bypass', async (req, res) => {
