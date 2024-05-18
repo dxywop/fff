@@ -41,7 +41,7 @@ const bypass = async (hwid) => {
     const response = await fetch(mainUrl, { headers });
 
     const endFetchTime = process.hrtime.bigint();
-    const fetchDuration = Number(endFetchTime - startFetchTime) / 1e6; // convert to milliseconds
+    const fetchDuration = Number(endFetchTime - startFetchTime) / 1e9; // convert to seconds
 
     const startExtractionTime = process.hrtime.bigint();
 
@@ -50,10 +50,10 @@ const bypass = async (hwid) => {
     const extractedKey = $('body > main > code').text().trim();
 
     const endExtractionTime = process.hrtime.bigint();
-    const extractionDuration = Number(endExtractionTime - startExtractionTime) / 1e6; // convert to milliseconds
+    const extractionDuration = Number(endExtractionTime - startExtractionTime) / 1e9; // convert to seconds
 
     if (extractedKey === hashedHwid) {
-      const result = `Success:\nKey: ${hashedHwid}\nFetch Duration: ${fetchDuration} ms\nExtraction Duration: ${extractionDuration} ms`;
+      const result = `Success:\nKey: ${hashedHwid}\nFetch Duration: ${fetchDuration} s\nExtraction Duration: ${extractionDuration} s`;
       cache.set(hwid, result);
       return result;
     } else {
