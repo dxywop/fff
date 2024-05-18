@@ -77,7 +77,7 @@ app.get('/api/bypass', async (req, res) => {
   const hwid = req.query.hwid;
 
   if (!hwid) {
-    return res.status(400).json({ error: 'Error: hwid is required' });
+    return res.status(400).json({ error: 'hwid is required' });
   }
 
   bypass(hwid)
@@ -87,6 +87,11 @@ app.get('/api/bypass', async (req, res) => {
     .catch(error => {
       res.status(500).json({ error: `Error: ${error}` });
     });
+});
+
+// Catch-all route handler
+app.all('*', (req, res) => {
+  res.status(500).end();
 });
 
 module.exports = app;
