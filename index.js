@@ -43,33 +43,39 @@ async function bypass(hwid) {
       return cachedResult;
     }
 
-    const startFetchTime = process.hrtime.bigint(); // Start timing the fetches
-    const responses = []; // Array to store responses
+    const startFetchTime = process.hrtime.bigint();
 
-    // Perform sequential requests in the order specified
-    for (const [index, url] of urls.entries()) {
-      // Dynamically import 'node-fetch' within the loop
-      const { default: fetch } = await import('node-fetch'); 
-      const response = await fetch(url, { 
-        method: index === 0 ? 'POST' : 'GET', 
-        headers 
-      });
-      responses.push(response); // Store the response
-    }
+    // Parallel Fetching with Order Preservation:
+    const responses = await Promise.all(
+      urls.map(async (url, index) => {
+        // Dynamically import 'node-fetch' within the loop
+        const { default: fetch } = await import('node-fetch');
+
+        const response = await fetch(url, {
+          method: index === 0 ? 'POST' : 'GET',
+          headers,
+        });
+        return { response, index }; // Return both the response and its original index
+      })
+    );
+
+    // Sort Responses Back to Original Order:
+    responses.sort((a, b) => a.index - b.index); // Sort by index
+    const orderedResponses = responses.map(item => item.response); // Extract responses
 
     const endFetchTime = process.hrtime.bigint();
-    const fetchDuration = (Number(endFetchTime - startFetchTime) / 1e9).toFixed(2) + " s"; // Calculate fetch duration
+    const fetchDuration = (Number(endFetchTime - startFetchTime) / 1e9).toFixed(2) + " s";
 
-    // Use the last response directly from the array
-    const $ = cheerio.load(await responses[2].text()); 
+    // **Optimized Cheerio Parsing:**
+    const $ = cheerio.load(await responses[2].text());  // Directly parse responses[2]
     const extractedKey = $('body > main > code').text().trim();
-    
-    if (extractedKey === hashedHwid) { // Check if the extracted key matches
+
+    if (extractedKey === hashedHwid) { 
       const result = { status: "Success", key: hashedHwid, fetchDuration };
-      cache.set(hwid, result);  // Cache successful result
+      cache.set(hwid, result); 
       return result;
     } else {
-      return { status: "Error", message: "Nuh Uhh" }; // Invalid response
+      return { status: "Error", message: "Nuh Uhh" }; 
     }
   } catch (error) {
     const cachedError = cache.get(error.config.url);
