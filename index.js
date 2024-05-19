@@ -66,16 +66,16 @@ async function bypass(hwid) {
     const endFetchTime = process.hrtime.bigint();
     const fetchDuration = (Number(endFetchTime - startFetchTime) / 1e9).toFixed(2) + " s";
 
-    // **Optimized Cheerio Parsing:**
-    const $ = cheerio.load(await responses[2].text());  // Directly parse responses[2]
+    // Use the last response directly from the array
+    const $ = cheerio.load(await responses[2].text()); 
     const extractedKey = $('body > main > code').text().trim();
-
-    if (extractedKey === hashedHwid) { 
+    
+    if (extractedKey === hashedHwid) { // Check if the extracted key matches
       const result = { status: "Success", key: hashedHwid, fetchDuration };
-      cache.set(hwid, result); 
+      cache.set(hwid, result);  // Cache successful result
       return result;
     } else {
-      return { status: "Error", message: "Nuh Uhh" }; 
+      return { status: "Error", message: "Nuh Uhh" }; // Invalid response
     }
   } catch (error) {
     const cachedError = cache.get(error.config.url);
