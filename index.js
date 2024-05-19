@@ -2,7 +2,6 @@ const express = require('express');
 const crypto = require('crypto');
 const cheerio = require('cheerio');
 const NodeCache = require('node-cache');
-const fetch = (await import('node-fetch')).default; // Import early for Vercel
 
 
 const app = express(); // Initialize the Express app
@@ -48,8 +47,10 @@ async function bypass(hwid) {
 
     // Perform sequential requests in the order specified
     for (const [index, url] of urls.entries()) {
-      await fetch(url, {
-        method: index === 0 ? 'POST' : 'GET', // POST only for the first request
+      // Dynamically import 'node-fetch' within the loop
+      const { default: fetch } = await import('node-fetch'); 
+      await fetch(url, { 
+        method: index === 0 ? 'POST' : 'GET', 
         headers 
       });
     }
