@@ -3,10 +3,8 @@ const crypto = require('crypto');
 const cheerio = require('cheerio');
 const NodeCache = require('node-cache');
 
+const app = express();
 
-const app = express(); // Initialize the Express app
-
-// Headers for mimicking browser requests
 const headers = {
   Referer: 'https://linkvertise.com/',
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -18,57 +16,47 @@ const headers = {
   Pragma: 'no-cache',
 };
 
-// Cache setup with TTL and checkperiod for efficiency
-const cache = new NodeCache({ 
-  stdTTL: 600, // 10 minutes
-  checkperiod: 120 // 2 minutes
-});
+const cache = new NodeCache({ stdTTL: 600 });
 
-// MD5 hashing function
 const md5 = (data) => crypto.createHash('md5').update(data).digest('hex');
 
-// Main bypass function
-async function bypass(hwid) {
-  const hashedHwid = md5(hwid);  // Calculate MD5 hash of the provided HWID
-  const urls = [ // URLs for sequential requests
-    `https://flux.li/android/external/start.php?HWID=${hwid}`,
-    'https://flux.li/android/external/check1.php',
-    'https://flux.li/android/external/main.php'
-  ];
+const bypass = async (hwid) => {
+  const fetch = (await import('node-fetch')).default;
+  const hashedHwid = md5(hwid);
+
+  const startUrl = `https://flux.li/android/external/start.php?HWID=${hwid}`;
+  const check1Url = 'https://flux.li/android/external/check1.php';
+  const mainUrl = 'https://flux.li/android/external/main.php';
 
   try {
-    // Check if the result is already in the cache
     const cachedResult = cache.get(hwid);
     if (cachedResult) {
       return cachedResult;
     }
 
-    const startFetchTime = process.hrtime.bigint(); // Start timing the fetches
+    const startFetchTime = process.hrtime.bigint();
 
-    // Perform sequential requests in the order specified
-    for (const [index, url] of urls.entries()) {
-      // Dynamically import 'node-fetch' within the loop
-      const { default: fetch } = await import('node-fetch'); 
-      await fetch(url, { 
-        method: index === 0 ? 'POST' : 'GET', 
-        headers 
-      });
-    }
+    await fetch(startUrl, { method: 'POST', headers });
+    await fetch(check1Url, { headers });
+    const response = await fetch(mainUrl, { headers });
 
     const endFetchTime = process.hrtime.bigint();
-    const fetchDuration = (Number(endFetchTime - startFetchTime) / 1e9).toFixed(2) + " s"; // Calculate fetch duration
+    const fetchDuration = (Number(endFetchTime - startFetchTime) / 1e9).toFixed(2); // convert to seconds and format
 
-    // Re-fetch the last URL to get the final response
-    const response = await fetch(urls[2], { headers });
-    const $ = cheerio.load(await response.text()); 
+    const text = await response.text();
+    const $ = cheerio.load(text);
     const extractedKey = $('body > main > code').text().trim();
 
-    if (extractedKey === hashedHwid) { // Check if the extracted key matches
-      const result = { status: "Success", key: hashedHwid, fetchDuration };
-      cache.set(hwid, result);  // Cache successful result
+    if (extractedKey === hashedHwid) {
+      const result = {
+        status: "Success",
+        key: hashedHwid,
+        fetchDuration: fetchDuration + " s"
+      };
+      cache.set(hwid, result);
       return result;
     } else {
-      return { status: "Error", message: "Nuh Uhh" }; // Invalid response
+      return { status: "Error", message: "Nuh Uhh" };
     }
   } catch (error) {
     const cachedError = cache.get(error.config.url);
