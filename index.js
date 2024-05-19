@@ -67,7 +67,8 @@ async function bypass(hwid) {
     const fetchDuration = (Number(endFetchTime - startFetchTime) / 1e9).toFixed(2) + " s";
 
     // Use the last response directly from the array
-    const $ = cheerio.load(await responses[2].text()); 
+    const $ = cheerio.load(await orderedResponses[2].text());  // Load sorted response
+
     const extractedKey = $('body > main > code').text().trim();
     
     if (extractedKey === hashedHwid) { // Check if the extracted key matches
