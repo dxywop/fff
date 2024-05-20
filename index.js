@@ -86,7 +86,9 @@ async function bypass(hwid) {
   }
 };
 
-export default async function handler(req, res) {
+export default function handler(req, res) {
+    res.status(500).json({ error: 'Invalid endpoint.' });
+  }
     const hwid = req.query.hwid;
   
     if (!hwid) {
@@ -103,4 +105,3 @@ export default async function handler(req, res) {
     } catch (error) {
       res.status(500).json({ error: `Error: ${error}` });
     }
-  }
