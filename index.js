@@ -2,9 +2,6 @@ const crypto = require('crypto');
 const cheerio = require('cheerio');
 const NodeCache = require('node-cache');
 
-
-const app = express(); // Initialize the Express app
-
 // Headers for mimicking browser requests
 const headers = {
   Referer: 'https://linkvertise.com/',
