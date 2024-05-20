@@ -1,7 +1,9 @@
-import crypto from 'crypto';
-import cheerio from 'cheerio';
-import NodeCache from 'node-cache';
-import fetch from 'node-fetch';
+const crypto = require('crypto');
+const cheerio = require('cheerio');
+const NodeCache = require('node-cache');
+
+
+const app = express(); // Initialize the Express app
 
 // Headers for mimicking browser requests
 const headers = {
@@ -45,6 +47,8 @@ async function bypass(hwid) {
 
     // Perform sequential requests in the order specified
     for (const [index, url] of urls.entries()) {
+      // Dynamically import 'node-fetch' within the loop
+      const { default: fetch } = await import('node-fetch'); 
       const response = await fetch(url, { 
         method: index === 0 ? 'POST' : 'GET', 
         headers 
@@ -86,20 +90,20 @@ async function bypass(hwid) {
 };
 
 export default async function handler(req, res) {
-  const hwid = req.query.hwid;
-
-  if (!hwid) {
-    return res.status(400).json({ error: 'hwid is required' });
+    const hwid = req.query.hwid;
+  
+    if (!hwid) {
+      return res.status(400).json({ error: 'hwid is required' });
+    }
+  
+    if (hwid.length < 32) {
+      return res.status(400).json({ error: 'Invalid hwid.' });
+    }
+  
+    try {
+      const result = await bypass(hwid);
+      res.json({ result });
+    } catch (error) {
+      res.status(500).json({ error: `Error: ${error}` });
+    }
   }
-
-  if (hwid.length < 32) {
-    return res.status(400).json({ error: 'Invalid hwid.' });
-  }
-
-  try {
-    const result = await bypass(hwid);
-    res.json({ result });
-  } catch (error) {
-    res.status(500).json({ error: `Error: ${error}` });
-  }
-}
