@@ -1,8 +1,6 @@
 const express = require('express');
-const crypto = require('crypto');
 const cheerio = require('cheerio');
 const NodeCache = require('node-cache');
-
 
 const app = express(); // Initialize the Express app
 
@@ -19,23 +17,17 @@ const headers = {
 };
 
 // Cache setup with TTL and checkperiod for efficiency
-const cache = new NodeCache({ 
+const cache = new NodeCache({
   stdTTL: 600, // 10 minutes
   checkperiod: 120 // 2 minutes
 });
 
-// MD5 hashing function
-const md5 = (data) => crypto.createHash('md5').update(data).digest('hex');
-
-// Main bypass function
 // Main bypass function
 async function bypass(hwid) {
-  // Removed the hashedHwid constant
-  
   const urls = [ // URLs for sequential requests
     `https://flux.li/android/external/start.php?HWID=${hwid}`,
-    'https://flux.li/android/external/main.php?hash=hXaP9sNCnTC4jDjb1i0WiqqNhhqK7SxRkuspEss3eSERSJX96OUPUCpHpGCyUOqQ',
-    'https://flux.li/android/external/main.php?hash=hXaP9sNCnTC4jDjb1i0WiqqNhhqK7SxRkuspEss3eSERSJX96OUPUCpHpGCyUOqQ'
+    'https://flux.li/android/external/check1.php?hash=BZ69njzmM6dmjRfDB3cfrlbQY9IMvOAoYQELCmu6XoKOQ6OSPZnYcrk6zTB0DRZ0',
+    'https://flux.li/android/external/main.php?hash=BZ69njzmM6dmjRfDB3cfrlbQY9IMvOAoYQELCmu6XoKOQ6OSPZnYcrk6zTB0DRZ0'
   ];
 
   try {
@@ -45,13 +37,13 @@ async function bypass(hwid) {
       return cachedResult;
     }
 
-    const startFetchTime = process.hrtime.bigint(); 
-    const responses = []; 
+    const startFetchTime = process.hrtime.bigint();
+    const responses = [];
 
     // Perform sequential requests in the order specified
     for (const [index, url] of urls.entries()) {
       // Dynamically import 'node-fetch' within the loop
-      const { default: fetch } = await import('node-fetch'); 
+      const { default: fetch } = await import('node-fetch');
       const response = await fetch(url, { 
         method: index === 0 ? 'POST' : 'GET', 
         headers 
@@ -60,32 +52,19 @@ async function bypass(hwid) {
     }
 
     const endFetchTime = process.hrtime.bigint();
-    const fetchDuration = (Number(endFetchTime - startFetchTime) / 1e9).toFixed(2) + " s"; 
+    const fetchDuration = (Number(endFetchTime - startFetchTime) / 1e9).toFixed(2) + " s";
 
     // Optimized Cheerio Parsing:
-    const $ = cheerio.load(await responses[2].text());  // Directly parse responses[2]
+    const $ = cheerio.load(await responses[2].text()); // Directly parse responses[2]
     const extractedKey = $('body > main > code').text().trim();
 
-    // Directly return the extractedKey without comparing to hashedHwid
+    // Since we are not checking against a hashed HWID, we just return the extracted key with a success status.
     const result = { status: "Success", key: extractedKey, fetchDuration };
-    cache.set(hwid, result); 
+    cache.set(hwid, result);
     return result;
   } catch (error) {
-    const cachedError = cache.get(error.config.url);
-    if (cachedError) {
-      return cachedError;
-    }
-    let message;
-
-    if (error.response) {
-      message = `Request error: ${error.response.status} - ${error.response.statusText}`;
-    } else if (error.request) {
-      message = `No response received - ${error.request}`;
-    } else {
-      message = `Error: ${error.message}`;
-    }
-    cache.set(error.config.url, message);
-    return { status: "Error", message: message };  // Updated the error handling to return a structured response
+    let message = `Error: ${error.message}`;
+    return { status: "Error", message };
   }
 };
 
