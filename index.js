@@ -50,6 +50,7 @@ app.get('/api/extract', async (req, res) => {
 // Catch-all route handler for undefined routes
 app.all('*', (req, res) => {
   res.status(404).send('Resource not found.');
+  
 });
 
 module.exports = app;
