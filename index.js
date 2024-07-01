@@ -1,54 +1,117 @@
 const express = require('express');
+const crypto = require('crypto');
 const cheerio = require('cheerio');
 const NodeCache = require('node-cache');
 
-const app = express();
 
-const cache = new NodeCache({
+const app = express(); // Initialize the Express app
+
+// Headers for mimicking browser requests
+const headers = {
+  Referer: 'https://linkvertise.com/',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+  'Accept-Language': 'en-US,en;q=0.9',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+  'Accept-Encoding': 'gzip, deflate, br',
+  Connection: 'keep-alive',
+  'Cache-Control': 'no-cache',
+  Pragma: 'no-cache',
+};
+
+// Cache setup with TTL and checkperiod for efficiency
+const cache = new NodeCache({ 
   stdTTL: 600, // 10 minutes
   checkperiod: 120 // 2 minutes
 });
 
-// Fetch and attempt to extract the key
-async function fetchAndExtractKey() {
-  const url = 'https://flux.li/android/external/main.php';
+// MD5 hashing function
+const md5 = (data) => crypto.createHash('md5').update(data).digest('hex');
+
+// Main bypass function
+// Main bypass function
+async function bypass(hwid) {
+  // Removed the hashedHwid constant
+  
+  const urls = [ // URLs for sequential requests
+    `https://flux.li/android/external/start.php?HWID=${hwid}`,
+    'https://flux.li/android/external/main.php?hash=hXaP9sNCnTC4jDjb1i0WiqqNhhqK7SxRkuspEss3eSERSJX96OUPUCpHpGCyUOqQ',
+    'https://flux.li/android/external/main.php?hash=hXaP9sNCnTC4jDjb1i0WiqqNhhqK7SxRkuspEss3eSERSJX96OUPUCpHpGCyUOqQ'
+  ];
 
   try {
-    // Dynamically import 'node-fetch'
-    const { default: fetch } = await import('node-fetch');
-    const response = await fetch(url, {
-      method: 'GET'
-    });
+    // Check if the result is already in the cache
+    const cachedResult = cache.get(hwid);
+    if (cachedResult) {
+      return cachedResult;
+    }
 
-    const body = await response.text();
-    const $ = cheerio.load(body);
+    const startFetchTime = process.hrtime.bigint(); 
+    const responses = []; 
+
+    // Perform sequential requests in the order specified
+    for (const [index, url] of urls.entries()) {
+      // Dynamically import 'node-fetch' within the loop
+      const { default: fetch } = await import('node-fetch'); 
+      const response = await fetch(url, { 
+        method: index === 0 ? 'POST' : 'GET', 
+        headers 
+      });
+      responses.push(response); // Store the response
+    }
+
+    const endFetchTime = process.hrtime.bigint();
+    const fetchDuration = (Number(endFetchTime - startFetchTime) / 1e9).toFixed(2) + " s"; 
+
+    // Optimized Cheerio Parsing:
+    const $ = cheerio.load(await responses[2].text());  // Directly parse responses[2]
     const extractedKey = $('body > main > code').text().trim();
 
-    if (extractedKey) {
-      return { status: "Success", key: extractedKey };
-    } else {
-      throw new Error("Key extraction failed");
-    }
+    // Directly return the extractedKey without comparing to hashedHwid
+    const result = { status: "Success", key: extractedKey, fetchDuration };
+    cache.set(hwid, result); 
+    return result;
   } catch (error) {
-    // Return a generic error message
-    return { status: "Error", message: "An error occurred" };
-  }
-}
+    const cachedError = cache.get(error.config.url);
+    if (cachedError) {
+      return cachedError;
+    }
+    let message;
 
-app.get('/api/extract', async (req, res) => {
-  fetchAndExtractKey()
+    if (error.response) {
+      message = `Request error: ${error.response.status} - ${error.response.statusText}`;
+    } else if (error.request) {
+      message = `No response received - ${error.request}`;
+    } else {
+      message = `Error: ${error.message}`;
+    }
+    cache.set(error.config.url, message);
+    return { status: "Error", message: message };  // Updated the error handling to return a structured response
+  }
+};
+
+app.get('/api/bypass', async (req, res) => {
+  const hwid = req.query.hwid;
+
+  if (!hwid) {
+    return res.status(400).json({ error: 'hwid is required' });
+  }
+
+  if (hwid.length < 32) {
+    return res.status(400).json({ error: 'Invalid hwid.' });
+  }
+
+  bypass(hwid)
     .then(result => {
-      res.json(result);
+      res.json({ result });
     })
     .catch(error => {
-      // Send a generic error message without specifying "Nuh Uhh"
-      res.status(500).json({ error: "An error occurred during processing." });
+      res.status(500).json({ error: `Error: ${error}` });
     });
 });
-// Catch-all route handler for undefined routes
+
+// Catch-all route handler
 app.all('*', (req, res) => {
-  res.status(404).send('Resource not found.');
-  
+  res.status(500).end();
 });
 
 module.exports = app;
