@@ -4,7 +4,6 @@ const NodeCache = require('node-cache');
 
 const app = express();
 
-// Cache setup with TTL and check period for efficiency
 const cache = new NodeCache({
   stdTTL: 600, // 10 minutes
   checkperiod: 120 // 2 minutes
