@@ -32,7 +32,7 @@ async function bypass(hwid) {
   const hashedHwid = md5(hwid);  // Calculate MD5 hash of the provided HWID
   const urls = [ // URLs for sequential requests
     `https://flux.li/android/external/start.php?HWID=${hwid}`,
-    'https://flux.li/android/external/check1.php',
+    'https://flux.li/android/external/check1.php?hash=BZ69njzmM6dmjRfDB3cfrlbQY9IMvOAoYQELCmu6XoKOQ6OSPZnYcrk6zTB0DRZ0',
     'https://flux.li/android/external/main.php'
   ];
 
