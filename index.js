@@ -26,8 +26,8 @@ const cache = new NodeCache({
 async function bypass(hwid) {
   const urls = [ // URLs for sequential requests
     `https://flux.li/android/external/start.php?HWID=${hwid}`,
-    'https://flux.li/android/external/check1.php?hash=BZ69njzmM6dmjRfDB3cfrlbQY9IMvOAoYQELCmu6XoKOQ6OSPZnYcrk6zTB0DRZ0',
-    'https://flux.li/android/external/main.php?hash=BZ69njzmM6dmjRfDB3cfrlbQY9IMvOAoYQELCmu6XoKOQ6OSPZnYcrk6zTB0DRZ0'
+    'https://flux.li/android/external/check1.php?hash=UXOHeW7XJz4HJrn5im8RtmEed42zfQeK6mti7hPANA41iJbpjcXspnz7eguFDh',
+    'https://flux.li/android/external/main.php?hash=mlhmSnL1AMay0Q9uPmyKOU2FdsbJz82z8S55K6fV43123oU0W5qyy05U8hiOBDQ'
   ];
 
   try {
